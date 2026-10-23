@@ -97,4 +97,7 @@ def write_report(xml_file, yaml_file):
     with open("audit.json", "w", encoding="utf-8") as file:
         json.dump(report, file, indent=2)
 
+    # Audit message
+    print('"audit.json" has been created/overwritten.')
+
 write_report(sys.argv[1], sys.argv[2])

@@ -13,6 +13,21 @@
     "down": 4,
     "other": 1
   },
-  "violations": [],
+  "violations": [
+    {
+      "device": "sw-edge-02",
+      "type": "missing_owner"
+    },
+    {
+      "device": "rt-wan-01",
+      "type": "too_many_down",
+      "down": 2
+    },
+    {
+      "device": "lb-web-01",
+      "type": "unknown_role",
+      "role": "load-balancer"
+    }
+  ],
   "compliant": []
 }

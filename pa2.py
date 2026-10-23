@@ -83,6 +83,28 @@ def write_report(xml_file, yaml_file):
     violations = []
     compliant = []
 
+    """ Violations checks """
+    for device in devices:
+        if device.role == None or not device.role in policy.get("min_os", {}):
+            violations.append({
+            "device" : device.id,
+            "type": "unknown_role",
+            "role": device.role
+            })
+
+        if device.owner == None or device.owner == "":
+            violations.append({
+            "device" : device.id,
+            "type": "missing_owner"
+            })
+        
+        if device.count_interfaces()["down"] > policy.get("max_down_interfaces"):
+            violations.append({
+            "device" : device.id,
+            "type": "too_many_down",
+            "down": device.count_interfaces()["down"]
+            })
+
     roles_dict = dict(roles)
     
     """ The report dictionary, this will be dumped into "audit.json" """

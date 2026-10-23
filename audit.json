@@ -35,5 +35,8 @@
       "role": "load-balancer"
     }
   ],
-  "compliant": []
+  "compliant": [
+    "fw-dmz-01",
+    "sw-core-01"
+  ]
 }

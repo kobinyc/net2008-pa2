@@ -117,6 +117,8 @@ def write_report(xml_file, yaml_file):
 
     """ Violations checks """
     for device in devices:
+        device_violations = 0
+
         if "min_os" in policy:
             if device.role == None or not device.role in policy.get("min_os", {}):
                 violations.append({
@@ -124,6 +126,7 @@ def write_report(xml_file, yaml_file):
                 "type": "unknown_role",
                 "role": device.role
                 })
+                device_violations += 1
 
         if "require_owner" in policy:
             if device.owner == None or device.owner == "" and policy.get("require_owner", False):
@@ -131,6 +134,7 @@ def write_report(xml_file, yaml_file):
                 "device" : device.id,
                 "type": "missing_owner"
                 })
+                device_violations += 1
         
         if "max_down_interfaces" in policy:
             if device.count_interfaces()["down"] > policy.get("max_down_interfaces", False):
@@ -139,6 +143,7 @@ def write_report(xml_file, yaml_file):
                 "type": "too_many_down",
                 "down": device.count_interfaces()["down"]
                 })
+                device_violations += 1
 
         if "min_os" in policy and device.role in policy.get("min_os") and device.role != None:
             if os_outdated(device.os, policy.get("min_os", {}).get(device.role)):
@@ -148,6 +153,10 @@ def write_report(xml_file, yaml_file):
                 "required": policy.get("min_os", {}).get(device.role),
                 "found": device.os
                 })
+                device_violations += 1
+        
+        if device_violations == 0:
+            compliant.append( device.id )
 
     roles_dict = dict(roles)
     

@@ -12,19 +12,19 @@ class Device:
         self.role = element.get("role")
         self.os = element.get("os")
 
-        # If the element has an owner and the owner tag has text inside
+        """ If the element has an owner and the owner tag has text inside """
         owner = element.find("owner")
         if owner != None and owner.text != None:
             self.owner = owner.text.strip()
         else:
             self.owner = ""
 
-        # Creating the interfaces list
+        """ Creating the interfaces list """
         self.interfaces = []
         for interface in element.findall("interface"):
             self.interfaces.append(interface.get("status", ""))
 
-    # This function just counts the devices interfaces
+    """ This function just counts the devices interfaces """
     def count_interfaces(self):
         interface_counts = { 
                  "up": 0, 
@@ -32,7 +32,7 @@ class Device:
                  "other": 0
                  }
 
-        # For every status in the interfaces, increase the count for that status
+        """ For every status in the interfaces, increase the count for that status """
         for status in self.interfaces:
             if status == "up":
                 interface_counts["up"] += 1
@@ -43,7 +43,7 @@ class Device:
 
         return interface_counts
 
-# This function is for auditing the xml file with the yaml file
+""" This function is for auditing the xml file with the yaml file """
 def write_report(xml_file, yaml_file):
     root = ET.parse(xml_file).getroot()
 
@@ -70,7 +70,7 @@ def write_report(xml_file, yaml_file):
                  "other": 0
                  }
 
-    # Counting the roles 
+    """ Counting the roles """
     for device in devices:
         if device.role not in roles:
             roles[device.role] = 0
@@ -80,24 +80,27 @@ def write_report(xml_file, yaml_file):
         for status, count in device.count_interfaces().items():
             interfaces[status] += count
 
+    violations = []
+    compliant = []
+
     roles_dict = dict(roles)
     
-    # The report dictionary, this will be dumped into "audit.json"
+    """ The report dictionary, this will be dumped into "audit.json" """
     report = {
             "site": root.get("site"),
             "total_devices": len(devices),
             "skipped_devices": skipped_devices,
             "roles": roles_dict,
             "interfaces": interfaces,
-            "violations": [],
-            "compliant": []
+            "violations": violations,
+            "compliant": sorted(compliant)
             }
 
-    # Dumping the report into a json
+    """ Dumping the report into a json """
     with open("audit.json", "w", encoding="utf-8") as file:
         json.dump(report, file, indent=2)
 
-    # Audit message
+    """ Audit message """
     print('"audit.json" has been created/overwritten.')
 
 write_report(sys.argv[1], sys.argv[2])

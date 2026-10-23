@@ -24,6 +24,12 @@
       "down": 2
     },
     {
+      "device": "rt-wan-01",
+      "type": "os_outdated",
+      "required": "17.3.1",
+      "found": "17.3"
+    },
+    {
       "device": "lb-web-01",
       "type": "unknown_role",
       "role": "load-balancer"

@@ -43,6 +43,38 @@ class Device:
 
         return interface_counts
 
+" Helper function for checking if the operating system is outdated "
+def os_outdated ( device_os, min_os ):
+
+    if device_os == min_os:
+        return False
+
+    device_os_split = device_os.split(".")
+    min_os_split = min_os.split(".")
+    device_os_nums = []
+    min_os_nums = []
+
+    for num in device_os_split:
+        device_os_nums.append(int(num))
+    for num in min_os_split:
+        min_os_nums.append(int(num))
+
+    if len(device_os_nums) > len(min_os_nums):
+        for x in range(0, len(device_os_nums) - len(min_os_nums)):
+            min_os_nums.append(0)
+    if len(min_os_nums) > len(device_os_nums):
+        for x in range(0, len(min_os_nums) - len(device_os_nums)):
+            device_os_nums.append(0)
+
+    for num in range(0, len(device_os_nums)):
+        if min_os_nums[num] > device_os_nums[num]:
+            return True
+        elif device_os_nums[num] > min_os_nums[num]:
+            return False
+
+    return False
+    pass
+
 """ This function is for auditing the xml file with the yaml file """
 def write_report(xml_file, yaml_file):
     root = ET.parse(xml_file).getroot()
@@ -85,25 +117,37 @@ def write_report(xml_file, yaml_file):
 
     """ Violations checks """
     for device in devices:
-        if device.role == None or not device.role in policy.get("min_os", {}):
-            violations.append({
-            "device" : device.id,
-            "type": "unknown_role",
-            "role": device.role
-            })
+        if "min_os" in policy:
+            if device.role == None or not device.role in policy.get("min_os", {}):
+                violations.append({
+                "device" : device.id,
+                "type": "unknown_role",
+                "role": device.role
+                })
 
-        if device.owner == None or device.owner == "":
-            violations.append({
-            "device" : device.id,
-            "type": "missing_owner"
-            })
+        if "require_owner" in policy:
+            if device.owner == None or device.owner == "" and policy.get("require_owner", False):
+                violations.append({
+                "device" : device.id,
+                "type": "missing_owner"
+                })
         
-        if device.count_interfaces()["down"] > policy.get("max_down_interfaces"):
-            violations.append({
-            "device" : device.id,
-            "type": "too_many_down",
-            "down": device.count_interfaces()["down"]
-            })
+        if "max_down_interfaces" in policy:
+            if device.count_interfaces()["down"] > policy.get("max_down_interfaces", False):
+                violations.append({
+                "device" : device.id,
+                "type": "too_many_down",
+                "down": device.count_interfaces()["down"]
+                })
+
+        if "min_os" in policy and device.role in policy.get("min_os") and device.role != None:
+            if os_outdated(device.os, policy.get("min_os", {}).get(device.role)):
+                violations.append({
+                "device": device.id,
+                "type": "os_outdated",
+                "required": policy.get("min_os", {}).get(device.role),
+                "found": device.os
+                })
 
     roles_dict = dict(roles)
     

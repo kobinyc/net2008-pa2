@@ -178,4 +178,10 @@ def write_report(xml_file, yaml_file):
     """ Audit message """
     print('"audit.json" has been created/overwritten.')
 
-write_report(sys.argv[1], sys.argv[2])
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print(" Missing arguments or too many arguments ")
+        sys.exit(2)
+    else:
+        write_report(sys.argv[1], sys.argv[2])
+        sys.exit(0)

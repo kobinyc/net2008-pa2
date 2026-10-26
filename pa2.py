@@ -46,9 +46,11 @@ class Device:
 " Helper function for checking if the operating system is outdated "
 def os_outdated ( device_os, min_os ):
 
+    """ If they are the same, the os can't be outdated """
     if device_os == min_os:
         return False
 
+    """ Get each individual number """
     device_os_split = device_os.split(".")
     min_os_split = min_os.split(".")
     device_os_nums = []
@@ -59,6 +61,7 @@ def os_outdated ( device_os, min_os ):
     for num in min_os_split:
         min_os_nums.append(int(num))
 
+    """ Handling different lengths """
     if len(device_os_nums) > len(min_os_nums):
         for x in range(0, len(device_os_nums) - len(min_os_nums)):
             min_os_nums.append(0)
@@ -66,6 +69,7 @@ def os_outdated ( device_os, min_os ):
         for x in range(0, len(min_os_nums) - len(device_os_nums)):
             device_os_nums.append(0)
 
+    """ Comparing the values """
     for num in range(0, len(device_os_nums)):
         if min_os_nums[num] > device_os_nums[num]:
             return True
@@ -73,7 +77,6 @@ def os_outdated ( device_os, min_os ):
             return False
 
     return False
-    pass
 
 """ This function is for auditing the xml file with the yaml file """
 def write_report(xml_file, yaml_file):
@@ -119,6 +122,8 @@ def write_report(xml_file, yaml_file):
     for device in devices:
         device_violations = 0
 
+        """ If the device isn't in min os, the error is an unknown role """
+        """ First we need to check if min os is even in the yaml file """
         if "min_os" in policy:
             if device.role == None or not device.role in policy.get("min_os", {}):
                 violations.append({
@@ -128,14 +133,18 @@ def write_report(xml_file, yaml_file):
                 })
                 device_violations += 1
 
+        """ If the device does not have an owner, the error is missing owner """
+        """ First we need to check if require_owner is even in the yaml file """
         if "require_owner" in policy:
-            if device.owner == None or device.owner == "" and policy.get("require_owner", False):
+            if device.owner == "" and policy.get("require_owner", False):
                 violations.append({
                 "device" : device.id,
                 "type": "missing_owner"
                 })
                 device_violations += 1
         
+        """ If the device has more than one down interface, that is also an error """
+        """ First we need to check if max_down_interfaces is even in the yaml file """
         if "max_down_interfaces" in policy:
             if device.count_interfaces()["down"] > policy.get("max_down_interfaces", False):
                 violations.append({
@@ -145,8 +154,10 @@ def write_report(xml_file, yaml_file):
                 })
                 device_violations += 1
 
-        if "min_os" in policy and device.role in policy.get("min_os") and device.role != None:
-            if os_outdated(device.os, policy.get("min_os", {}).get(device.role)):
+        """ If the device has an outdated os then it's also a violation """
+        """ First we need to check if the min os is even in the yaml file and make sure the device has a role in the yaml file """
+        if "min_os" in policy and device.role in policy.get("min_os", {}):
+            if device.os != None and os_outdated(device.os, policy.get("min_os", {}).get(device.role)):
                 violations.append({
                 "device": device.id,
                 "type": "os_outdated",
@@ -178,9 +189,11 @@ def write_report(xml_file, yaml_file):
     """ Audit message """
     print('"audit.json" has been created/overwritten.')
 
+""" The exit portion """
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print(" Missing arguments or too many arguments ")
+        print("Missing arguments or too many arguments")
+        print("usage: python pa2.py devices.py PA2_policy.yaml")
         sys.exit(2)
     else:
         write_report(sys.argv[1], sys.argv[2])

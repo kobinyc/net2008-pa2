@@ -136,17 +136,17 @@ def write_report(xml_file, yaml_file):
         """ If the device does not have an owner, the error is missing owner """
         """ First we need to check if require_owner is even in the yaml file """
         if "require_owner" in policy:
-            if device.owner == "" and policy.get("require_owner", False):
+            if device.owner == "" and policy.get("require_owner"):
                 violations.append({
                 "device" : device.id,
                 "type": "missing_owner"
                 })
                 device_violations += 1
         
-        """ If the device has more than one down interface, that is also an error """
+        """ If the device has more than the max down interfaces, that is also an error """
         """ First we need to check if max_down_interfaces is even in the yaml file """
         if "max_down_interfaces" in policy:
-            if device.count_interfaces()["down"] > policy.get("max_down_interfaces", False):
+            if device.count_interfaces()["down"] > policy.get("max_down_interfaces"):
                 violations.append({
                 "device" : device.id,
                 "type": "too_many_down",
@@ -157,7 +157,7 @@ def write_report(xml_file, yaml_file):
         """ If the device has an outdated os then it's also a violation """
         """ First we need to check if the min os is even in the yaml file and make sure the device has a role in the yaml file """
         if "min_os" in policy and device.role in policy.get("min_os", {}):
-            if device.os != None and os_outdated(device.os, policy.get("min_os", {}).get(device.role)):
+            if not device.os is None and os_outdated(device.os, policy.get("min_os", {}).get(device.role)):
                 violations.append({
                 "device": device.id,
                 "type": "os_outdated",
@@ -193,8 +193,12 @@ def write_report(xml_file, yaml_file):
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Missing arguments or too many arguments")
-        print("usage: python pa2.py devices.py PA2_policy.yaml")
+        print("usage: python pa2.py DEVICES.xml PA2_policy.yaml")
         sys.exit(2)
     else:
-        write_report(sys.argv[1], sys.argv[2])
-        sys.exit(0)
+        try:
+            write_report(sys.argv[1], sys.argv[2])
+            sys.exit(0)
+        except (FileNotFoundError, ET.ParseError, yaml.YAMLError) as error:
+            print(f"Error: {error}")
+            sys.exit(1)
